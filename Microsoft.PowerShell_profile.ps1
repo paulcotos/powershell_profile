@@ -156,10 +156,12 @@ function grep {
         [Parameter()][string]$dir
     )
     process {
+        Write-Host ($regex)
+        Write-Host ($dir)
         if ($dir) {
             Get-ChildItem -Path $dir -Recurse -File | Select-String -Pattern $regex
-        } else {     # Use if piped input is provided
-            $input | Select-String -Pattern $regex
+        } else {    
+            Get-ChildItem -Path $PWD.path -Recurse -File | Select-String -Pattern $regex
         }
     }
 }
