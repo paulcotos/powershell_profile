@@ -149,87 +149,6 @@ function gitpush {
     git push
 }
 
-function ssh-m122 {
-    param ([string]$ip)
-    ssh -i ~\.ssh\06-student.pem -o ServerAliveInterval=30 "ubuntu@$ip"
-}
-
-function ssh-copy-key {
-    param(
-        [parameter(Position=0)]
-        [string]$user,
-
-        [parameter(Position=1)]
-        [string]$ip
-    )
-    $pubKeyPath = "~\.ssh\id_ed25519.pub"
-    $sshCommand = "cat $pubKeyPath | ssh $user@$ip 'cat >> ~/.ssh/authorized_keys'"
-    Invoke-Expression $sshCommand
-}
-
-#Use this function to send content to my wastebin instance
-function Send-Wastebin {
-    [CmdletBinding()]
-    param (
-        [Parameter(Position=0, ValueFromPipeline=$true, Mandatory=$false)]
-        [string[]]$Content,
-
-        [Parameter(Position=1)]
-        [int]$ExpirationTime = 3600,
-
-        [Parameter(Position=2)]
-        [bool]$BurnAfterReading = $false,
-
-        [Parameter(Position=3)]
-        [switch]$Help
-    )
-    begin {
-        if ($Help) {
-            Write-Host "Use this to send a message to the Wastebin Server."
-            Write-Host "Make sure to replace the encoded url below with your own url." 
-            Write-Host "If you need help, don't hesitate to create an issue on my GitHub repository :)"
-            Write-Host "example: ptw This is a test message"
-            Write-Host "example: ptw 'C:\path\to\file.txt' -ExpirationTime 3600 -BurnAfterReading"
-            Write-Host "example: echo 'Hello World!' | ptw"
-            return
-        }
-        $WastebinServerUrl = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("aHR0cHM6Ly9iaW4uY3Jhenl3b2xmLmRldg=="))
-        $Payload = @{
-            text = ""
-            extension = $null
-            expires = $ExpirationTime
-            burn_after_reading = $BurnAfterReading
-        }
-    }
-    process {
-        if (-not $Help) {
-            foreach ($line in $Content) {
-                if (Test-Path $line -PathType Leaf) {
-                    $Payload.text += (Get-Content $line -Raw) + "`n"
-                } else {
-                    $Payload.text += $line + "`n"
-                }
-            }
-        }
-    }
-    end {
-        if (-not $Help) {
-            $Payload.text = $Payload.text.TrimEnd("`n")
-            $jsonPayload = $Payload | ConvertTo-Json
-            
-            try {
-                $Response = Invoke-RestMethod -Uri $WastebinServerUrl -Method Post -Body $jsonPayload -ContentType 'application/json'
-                $Path = $Response.path -replace '\.\w+$', ''
-                Write-Host ""
-                Write-Host "$WastebinServerUrl$Path"
-            }
-            catch {
-                Write-Host "Error occurred: $_"
-            }
-        }
-    }
-}
-Set-Alias -Name ptw -Value Send-Wastebin
 
 function grep {
     param (
@@ -327,7 +246,7 @@ function sha256 { Get-FileHash -Algorithm SHA256 $args }
 function expl { explorer . }
 
 # Quick shortcuts
-Set-Alias n notepad
+Set-Alias n notepad++
 Set-Alias vs code
 
 # Aliases for reboot and poweroff
@@ -341,10 +260,8 @@ function cd... { Set-Location ..\.. }
 function cd.... { Set-Location ..\..\.. }
 
 # Folder shortcuts
-function cdgit {Set-Location "G:\Informatik\Projekte"}
-function cdtbz {Set-Location "$env:OneDriveCommercial\Dokumente\Daten\TBZ"}
-function cdbmz {Set-Location "$env:OneDriveCommercial\Dokumente\Daten\BMZ"}
-function cdhalter {Set-Location "$env:OneDriveCommercial\Dokumente\Daten\Halter"}
+
+function cdscr {Set-Location "$env:OneDriveCommercial\Scripts"}
 
 # -------------
 # Run section
@@ -353,7 +270,7 @@ Install-Config
 # Update PowerShell in the background
 Start-Job -ScriptBlock {
     Write-Host "⚡ Invoking Helper-Script" -ForegroundColor Yellow
-    . Invoke-Expression (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/CrazyWolf13/home-configs/main/pwsh_helper.ps1" -UseBasicParsing).Content
+    . Invoke-Expression (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/paulcotos/powershell_profile/main/pwsh_helper.ps1" -UseBasicParsing).Content
     Update-PowerShell 
 } > $null 2>&1
 # Try to import MS PowerToys WinGetCommandNotFound
@@ -363,8 +280,8 @@ if (-not $?) { Write-Host "💭 Make sure to install WingetCommandNotFound by MS
 # Create profile if not exists
 if (-not (Test-Path -Path $PROFILE)) {
     New-Item -ItemType File -Path $PROFILE | Out-Null
-    Add-Content -Path $PROFILE -Value 'iex (iwr "https://raw.githubusercontent.com/CrazyWolf13/home-configs/main/Microsoft.PowerShell_profile.ps1").Content'
+    Add-Content -Path $PROFILE -Value 'iex (iwr "https://raw.githubusercontent.com/paulcotos/powershell_profile/main/Microsoft.PowerShell_profile.ps1").Content'
     Write-Host "PowerShell profile created at $PROFILE." -ForegroundColor Yellow
 }
 # Inject OhMyPosh
-oh-my-posh init pwsh --config 'https://raw.githubusercontent.com/CrazyWolf13/home-configs/main/montys.omp.json' | Invoke-Expression
+oh-my-posh init pwsh --config 'https://raw.githubusercontent.com/paulcotos/powershell_profile/main/montys.omp.json' | Invoke-Expression
