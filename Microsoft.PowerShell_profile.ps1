@@ -156,7 +156,6 @@ function grep {
         [Parameter()][string]$dir
     )
     process {
-        Write-Host ($dir)
         if ($dir) {
             Get-ChildItem -Path $dir -Recurse -File | Select-String -Pattern $regex
         } else {    
