@@ -152,8 +152,8 @@ function gitpush {
 
 function grep {
     param (
-        [string]$regex,
-        [string]$dir
+        [Parameter()][string]$regex,
+        [Parameter()][string]$dir
     )
     process {
         if ($dir) {
