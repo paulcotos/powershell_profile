@@ -269,8 +269,8 @@ function cd.... { Set-Location ..\..\.. }
 # Folder shortcuts
 
 function cdscr {Set-Location "$env:OneDriveCommercial\Scripts"}
-
 function cdobs {Set-Location "C:\Obsidian\God_Notes"}
+function cddw {Set-Location "$env:OneDriveCommercial\Downloads"}
 
 # -------------
 # Run section
