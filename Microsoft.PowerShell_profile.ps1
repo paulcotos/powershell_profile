@@ -246,8 +246,11 @@ function sha256 { Get-FileHash -Algorithm SHA256 $args }
 function expl { explorer . }
 
 # Quick shortcuts
-Set-Alias n Start notepad++
 Set-Alias vs code
+
+#notepad++
+function notepad-plus {Start notepad++}
+Set-Alias n notepad-plus
 
 # Aliases for reboot and poweroff
 function Reboot-System {Restart-Computer -Force}
