@@ -165,15 +165,7 @@ function find {
 }
 
 function uptime {
-    if ($PSVersionTable.PSVersion.Major -eq 5) {
-        $lastBootUpTime = Get-WmiObject win32_operatingsystem | Select-Object @{Name='LastBootUpTime'; Expression={$_.ConverttoDateTime($_.lastbootuptime)}}
-        $uptime = (Get-Date) - $lastBootUpTime.LastBootUpTime
-    } else {
-        $since = net statistics workstation | Select-String "since" | ForEach-Object { $_.ToString().Replace('Statistics since ', '') }
-        $lastBootUpTime = [DateTime]::ParseExact($since, "M/d/yyyy h:mm:ss AM/PM", [Globalization.CultureInfo]::InvariantCulture)
-        $uptime = (Get-Date) - $lastBootUpTime
-    }
-    return "Online since $($uptime.Days) days, $($uptime.Hours) hours, $($uptime.Minutes) minutes"
+    (get-date)-(gcim Win32_OperatingSystem).LastBootUpTime
 }
 
 function sed($file, $find, $replace) {
