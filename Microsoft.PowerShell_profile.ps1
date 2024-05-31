@@ -150,7 +150,7 @@ function gitpush {
 }
 
 
-function grep {
+function find {
     param (
         [Parameter()][string]$regex,
         [Parameter()][string]$dir
