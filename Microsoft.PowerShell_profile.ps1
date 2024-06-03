@@ -244,10 +244,6 @@ Set-Alias vs code
 function notepad-plus {Start notepad++}
 Set-Alias n notepad-plus
 
-#Prod CMP JUMP
-function cmp-jump {Start "$env:OneDriveCommercial\Desktop\Jump.RDP"}
-Set-Alias jump cmp-jump
-
 # Aliases for reboot and poweroff
 function Reboot-System {Restart-Computer -Force}
 Set-Alias reboot Reboot-System
