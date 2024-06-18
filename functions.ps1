@@ -219,3 +219,5 @@ Set-Alias n notepad-plus
 function cdscr {Set-Location "$env:OneDriveCommercial\Scripts"}
 function cdobs {Set-Location "C:\Obsidian\God_Notes"}
 function cddw {Set-Location "$env:UserProfile\Downloads"}
+function expl { explorer . }
+function Get-PubIP { (Invoke-WebRequest http://ifconfig.me/ip).Content }
