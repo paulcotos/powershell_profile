@@ -1,16 +1,17 @@
-Write-Host ""
-Write-Host "Welcome Paul ⚡" -ForegroundColor DarkCyan
-Write-Host ""
-
-#All Colors: Black, Blue, Cyan, DarkBlue, DarkCyan, DarkGray, DarkGreen, DarkMagenta, DarkRed, DarkYellow, Gray, Green, Magenta, Red, White, Yellow.
-
 # Check Internet and exit if it takes longer than 1 second
 $canConnectToGitHub = Test-Connection github.com -Count 1 -Quiet -TimeoutSeconds 1
 $configPath = "$HOME\pwsh_custom_config.yml"
+$githubUser = "paulcotos"
+$name= ""
+$OhMyPoshConfig = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/montys.omp.json"
+$font="FiraCode" # Font-Display and variable Name, name the same as font_folder
+$font_url = "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/FiraCode.zip" # Put here the URL of the font file that should be installed
+$fontFileName = "FiraCodeNerdFontMono-Regular.ttf" # Put here the font file that should be installed
+$font_folder = "FiraCode" # Put here the name of the zip folder, but without the .zip extension.
 
 function Initialize-DevEnv {
     if (-not $global:canConnectToGitHub) {
-        Write-Host "❌ Skipping Dev Environment Initialization due to GitHub.com not responding within 1 second." -ForegroundColor Red
+        Write-Host "❌ Skipping dev-environment initialization due to GitHub.com not responding within 1 second." -ForegroundColor Red
         return
     }
     $modules = @(
@@ -18,6 +19,7 @@ function Initialize-DevEnv {
         @{ Name = "Powershell-Yaml"; ConfigKey = "Powershell-Yaml_installed" },
         @{ Name = "PoshFunctions"; ConfigKey = "PoshFunctions_installed" }
     )
+    $importedModuleCount = 0
     foreach ($module in $modules) {
         $isInstalled = Get-ConfigValue -Key $module.ConfigKey
         if ($isInstalled -ne "True") {
@@ -25,26 +27,23 @@ function Initialize-DevEnv {
             Initialize-Module $module.Name
         } else {
             Import-Module $module.Name
-            Write-Host "✅ $($module.Name) module is already installed." -ForegroundColor Green
+            $importedModuleCount++
         }
     }
-    if ($vscode_installed -ne "True") { 
-         Write-Host "⚡ Invoking Helper-Script" -ForegroundColor Yellow
-        . Invoke-Expression (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/paulcotos/powershell_profile/main/pwsh_helper.ps1" -UseBasicParsing).Content
-        Test-vscode 
-    }
+    Write-Host "✅ Imported $importedModuleCount modules successfully." -ForegroundColor Green
     if ($ohmyposh_installed -ne "True") { 
         Write-Host "⚡ Invoking Helper-Script" -ForegroundColor Yellow
-        . Invoke-Expression (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/paulcotos/powershell_profile/main/pwsh_helper.ps1" -UseBasicParsing).Content
+        . Invoke-Expression (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/$githubUser/unix-pwsh/main/pwsh_helper.ps1" -UseBasicParsing).Content
         Test-ohmyposh 
         }
-    if ($FiraCode_installed -ne "True") {
+        $font_installed_var = "${font}_installed"
+    if (((Get-Variable -Name $font_installed_var).Value) -ne "True") {
         Write-Host "⚡ Invoking Helper-Script" -ForegroundColor Yellow
-        . Invoke-Expression (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/paulcotos/powershell_profile/main/pwsh_helper.ps1" -UseBasicParsing).Content
-        Test-firacode 
+        . Invoke-Expression (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/$githubUser/unix-pwsh/main/pwsh_helper.ps1" -UseBasicParsing).Content
+        Test-$font
         }
     
-    Write-Host "✅ Successfully initialized Pwsh with all Modules and applications" -ForegroundColor Green
+    Write-Host "✅ Successfully initialized Pwsh with all modules and applications`n" -ForegroundColor Green
 }
 
 # Function to create config file
@@ -53,7 +52,7 @@ function Install-Config {
         New-Item -ItemType File -Path $configPath | Out-Null
         Write-Host "Configuration file created at $configPath ❗" -ForegroundColor Yellow
     } else {
-        Write-Host "✅ Successfully loaded Config file" -ForegroundColor Green
+        Write-Host "✅ Successfully loaded config file" -ForegroundColor Green
     }
     Initialize-Keys
     Initialize-DevEnv
@@ -66,7 +65,6 @@ function Set-ConfigValue {
         [string]$Value
     )
     $config = @{}
-
     # Try to load the existing config file content
     if (Test-Path -Path $configPath) {
         $content = Get-Content $configPath -Raw
@@ -74,12 +72,10 @@ function Set-ConfigValue {
             $config = $content | ConvertFrom-Yaml
         }
     }
-
     # Ensure $config is a hashtable
     if (-not $config) {
         $config = @{}
     }
-
     $config[$Key] = $Value
     $config | ConvertTo-Yaml | Set-Content $configPath
     # Write-Host "Set '$Key' to '$Value' in configuration file." -ForegroundColor Green
@@ -118,168 +114,112 @@ function Initialize-Module {
             Write-Error "❌ Failed to install module ${moduleName}: $_"
         }
     } else {
-        Write-Host "❌ Skipping Module Initialization check due to GitHub.com not responding within 1 second." -ForegroundColor Yellow
+        Write-Host "❌ Skipping Module initialization check due to GitHub.com not responding within 1 second." -ForegroundColor Yellow
     }
 }
 
 function Initialize-Keys {
-    $keys = "Terminal-Icons_installed", "Powershell-Yaml_installed", "PoshFunctions_installed", "FiraCode_installed", "vscode_installed", "ohmyposh_installed"
+    $keys = "Terminal-Icons_installed", "Powershell-Yaml_installed", "PoshFunctions_installed", "${font}_installed", "ohmyposh_installed"
     foreach ($key in $keys) {
         $value = Get-ConfigValue -Key $key
         Set-Variable -Name $key -Value $value -Scope Global
     }
 }
 
-Function Test-CommandExists {
-    Param ($command)
-    $oldPreference = $ErrorActionPreference
-    $ErrorActionPreference = 'SilentlyContinue'
-    try { if (Get-Command $command) { RETURN $true } }
-    Catch { Write-Host "$command does not exist"; RETURN $false }
-    Finally { $ErrorActionPreference = $oldPreference }
-} 
-
-# ------
-# Custom function and alias section
-
-function gitpush {
-    git pull
-    git add .
-    git commit -m "$args"
-    git push
-}
-
-
-function find {
-    param (
-        [Parameter()][string]$regex,
-        [Parameter()][string]$dir
-    )
-    process {
-        if ($dir) {
-            Get-ChildItem -Path $dir -Recurse -File | Select-String -Pattern $regex
-        } else {    
-            Get-ChildItem -Path $PWD.path -Recurse -File | Select-String -Pattern $regex
-        }
-    }
-}
-
-function uptime {
-    (get-date)-(gcim Win32_OperatingSystem).LastBootUpTime
-}
-
-function sed($file, $find, $replace) {
-    (Get-Content $file).replace("$find", $replace) | Set-Content $file
-}
-
-function which($name) {
-    Get-Command $name | Select-Object -ExpandProperty Definition
-}
-
-function export($name, $value) {
-    set-item -force -path "env:$name" -value $value;
-}
-
-function pkill($name) {
-    Get-Process $name -ErrorAction SilentlyContinue | Stop-Process
-}
-
-function pgrep($name) {
-    Get-Process $name
-}
-
-function head {
-    param($Path, $n = 10)
-    Get-Content $Path -Head $n
-}
-
-function tail {
-    param($Path, $n = 10)
-    Get-Content $Path -Tail $n
-}
-
-# Does the the rough equivalent of dir /s /b. For example, dirs *.png is dir /s /b *.png
-function dirs {
-    if ($args.Count -gt 0) {
-        Get-ChildItem -Recurse -Include "$args" | Foreach-Object FullName
-    } else {
-        Get-ChildItem -Recurse | Foreach-Object FullName
-    }
-}
-
-# Function to run a command or shell as admin.
-function admin {
-    if ($args.Count -gt 0) {   
-        $argList = "& '" + $args + "'"
-        Start-Process "wt.exe" -Verb runAs -ArgumentList $argList
-    } else {
-        Start-Process "wt.exe" -Verb runAs
-    }
-}
-Set-Alias -Name sudo -Value admin
-
-function unzip ($file) {
-    $fullPath = Join-Path -Path $pwd -ChildPath $file
-    if (Test-Path $fullPath) {
-        Write-Output "Extracting $file to $pwd"
-        Expand-Archive -Path $fullPath -DestinationPath $pwd
-    } else {
-        Write-Output "File $file does not exist in the current directory"
-    }
-}
-
-# Short ulities
-function ll { Get-ChildItem -Path $pwd -File }
-function df {get-volume}
-function Get-PubIP { (Invoke-WebRequest http://ifconfig.me/ip).Content }
-function md5 { Get-FileHash -Algorithm MD5 $args }
-function sha1 { Get-FileHash -Algorithm SHA1 $args }
-function sha256 { Get-FileHash -Algorithm SHA256 $args }
-function expl { explorer . }
-
-# Quick shortcuts
-Set-Alias vs code
-
-#notepad++
-function notepad-plus {Start notepad++}
-Set-Alias n notepad-plus
-
-# Aliases for reboot and poweroff
-function Reboot-System {Restart-Computer -Force}
-Set-Alias reboot Reboot-System
-function Poweroff-System {Stop-Computer -Force}
-Set-Alias poweroff Poweroff-System
-
-# Useful file-management functions
-function cd... { Set-Location ..\.. }
-function cd.... { Set-Location ..\..\.. }
-
-# Folder shortcuts
-
-function cdscr {Set-Location "$env:OneDriveCommercial\Scripts"}
-function cdobs {Set-Location "C:\Obsidian\God_Notes"}
-function cddw {Set-Location "$env:UserProfile\Downloads"}
-
-
 # -------------
 # Run section
 
+Write-Host ""
+Write-Host "Welcome $name ⚡" -ForegroundColor DarkCyan
+Write-Host ""
+#All Colors: Black, Blue, Cyan, DarkBlue, DarkCyan, DarkGray, DarkGreen, DarkMagenta, DarkRed, DarkYellow, Gray, Green, Magenta, Red, White, Yellow.
+
+
 Install-Config
-# Update PowerShell in the background
-Start-Job -ScriptBlock {
-    Write-Host "⚡ Invoking Helper-Script" -ForegroundColor Yellow
-    . Invoke-Expression (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/paulcotos/powershell_profile/main/pwsh_helper.ps1" -UseBasicParsing).Content
-    Update-PowerShell 
-} > $null 2>&1
+
 # Try to import MS PowerToys WinGetCommandNotFound
 Import-Module -Name Microsoft.WinGet.CommandNotFound > $null 2>&1
-if (-not $?) { Write-Host "💭 Make sure to install WingetCommandNotFound by MS Powertoys" -ForegroundColor Yellow }
+if (-not $?) { Write-Host "💭 Make sure to install WingetCommandNotFound by MS PowerToys" -ForegroundColor Yellow }
 
-# Create profile if not exists
-if (-not (Test-Path -Path $PROFILE)) {
-    New-Item -ItemType File -Path $PROFILE | Out-Null
-    Add-Content -Path $PROFILE -Value 'iex (iwr "https://raw.githubusercontent.com/paulcotos/powershell_profile/main/Microsoft.PowerShell_profile.ps1").Content'
-    Write-Host "PowerShell profile created at $PROFILE." -ForegroundColor Yellow
-}
 # Inject OhMyPosh
-oh-my-posh init pwsh --config 'https://raw.githubusercontent.com/paulcotos/powershell_profile/main/montys.omp.json' | Invoke-Expression
+oh-my-posh init pwsh --config $OhMyPoshConfig | Invoke-Expression
+
+
+
+# ----------------------------------------------------------
+# Deferred loading
+# ----------------------------------------------------------
+
+
+$Deferred = {
+    . Invoke-Expression (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/$githubUser/unix-pwsh/main/functions.ps1" -UseBasicParsing).Content
+    # Create profile if not exists
+    if (-not (Test-Path -Path $PROFILE)) {
+        New-Item -ItemType File -Path $PROFILE | Out-Null
+        Add-Content -Path $PROFILE -Value "iex (iwr `https://raw.githubusercontent.com/$githubUser/unix-pwshs/main/Microsoft.PowerShell_profile.ps1`).Content"
+        Write-Host "PowerShell profile created at $PROFILE." -ForegroundColor Yellow
+    }
+    
+    # Update PowerShell in the background
+    Start-Job -ScriptBlock {
+        Write-Host "⚡ Invoking Helper-Script" -ForegroundColor Yellow
+        . Invoke-Expression (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/$githubUser/unix-pwsh/main/pwsh_helper.ps1" -UseBasicParsing).Content
+        Update-PowerShell 
+    } > $null 2>&1
+}
+
+
+$GlobalState = [psmoduleinfo]::new($false)
+$GlobalState.SessionState = $ExecutionContext.SessionState
+
+# to run our code asynchronously
+$Runspace = [runspacefactory]::CreateRunspace($Host)
+$Powershell = [powershell]::Create($Runspace)
+$Runspace.Open()
+$Runspace.SessionStateProxy.PSVariable.Set('GlobalState', $GlobalState)
+
+# ArgumentCompleters are set on the ExecutionContext, not the SessionState
+# Note that $ExecutionContext is not an ExecutionContext, it's an EngineIntrinsics 😡
+$Private = [Reflection.BindingFlags]'Instance, NonPublic'
+$ContextField = [Management.Automation.EngineIntrinsics].GetField('_context', $Private)
+$Context = $ContextField.GetValue($ExecutionContext)
+
+# Get the ArgumentCompleters. If null, initialise them.
+$ContextCACProperty = $Context.GetType().GetProperty('CustomArgumentCompleters', $Private)
+$ContextNACProperty = $Context.GetType().GetProperty('NativeArgumentCompleters', $Private)
+$CAC = $ContextCACProperty.GetValue($Context)
+$NAC = $ContextNACProperty.GetValue($Context)
+if ($null -eq $CAC)
+{
+    $CAC = [Collections.Generic.Dictionary[string, scriptblock]]::new()
+    $ContextCACProperty.SetValue($Context, $CAC)
+}
+if ($null -eq $NAC)
+{
+    $NAC = [Collections.Generic.Dictionary[string, scriptblock]]::new()
+    $ContextNACProperty.SetValue($Context, $NAC)
+}
+
+# Get the AutomationEngine and ExecutionContext of the runspace
+$RSEngineField = $Runspace.GetType().GetField('_engine', $Private)
+$RSEngine = $RSEngineField.GetValue($Runspace)
+$EngineContextField = $RSEngine.GetType().GetFields($Private) | Where-Object {$_.FieldType.Name -eq 'ExecutionContext'}
+$RSContext = $EngineContextField.GetValue($RSEngine)
+
+# Set the runspace to use the global ArgumentCompleters
+$ContextCACProperty.SetValue($RSContext, $CAC)
+$ContextNACProperty.SetValue($RSContext, $NAC)
+
+$Wrapper = {
+    # Without a sleep, you get issues:
+    #   - occasional crashes
+    #   - prompt not rendered
+    #   - no highlighting
+    # Assumption: this is related to PSReadLine.
+    # 20ms seems to be enough on my machine, but let's be generous - this is non-blocking
+    Start-Sleep -Milliseconds 100
+
+    . $GlobalState {. $Deferred; Remove-Variable Deferred}
+}
+
+$null = $Powershell.AddScript($Wrapper.ToString()).BeginInvoke()
