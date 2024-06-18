@@ -39,12 +39,6 @@ iex (iwr "https://raw.githubusercontent.com/paulcotos/powershell_profile/main/Mi
 - **Deferred Loading**: Improves function loading time for a smoother experience. 🕒
 - **Automatic Installation**: The scripts automatically install necessary modules and components on first execution. 🛠️
 
-## Showcase 🌟
-Here is an image, how the finished config looks like, but this can be easily changed, via OhMyPosh.
-However, this preview is not so meaningful, as most of the visual configuration is done by OhMyPosh.
-![Showcase](./assets/showcase_pwsh.png)
-
-
 ## Components Installed 🛠️
 - **Terminal-Icons Module**: Enhances terminal UI with icons. 🎨
 - **Powershell-Yaml**: Facilitates configuration with a YAML file, saving time. 📝
