@@ -221,3 +221,15 @@ function cdobs {Set-Location "C:\Obsidian\God_Notes"}
 function cddw {Set-Location "$env:UserProfile\Downloads"}
 function expl { explorer . }
 function Get-PubIP { (Invoke-WebRequest http://ifconfig.me/ip).Content }
+
+#prevent computer lock
+function doto{
+    param($minutes = 600)
+
+    $myshell = New-Object -com "Wscript.Shell"
+
+    for ($i = 0; $i -lt $minutes; $i++) {
+    Start-Sleep -Seconds 60
+    $myshell.sendkeys(".")
+    }
+}
